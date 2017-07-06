@@ -296,3 +296,30 @@ test('errors when using \'only\' and \'exclude\' together', async t => {
         ]
     }), /You can't use 'exclude' and 'only' at the same time/);
 });
+
+test('require files without extension', async t => {
+    await cleanDir(path.resolve(__dirname, './fixtures/output/require-file'));
+
+    const stats = await runWebpack({
+        context: path.resolve(__dirname, './fixtures/app'),
+
+        output: {
+            publicPath: '',
+            path: path.resolve(__dirname, './fixtures/output/require-file')
+        },
+
+        entry: {
+            app: './require-file.js'
+        },
+
+        plugins: [
+            new ModulesCdnWebpackPlugin()
+        ]
+    });
+
+    const files = stats.compilation.chunks.reduce((files, x) => files.concat(x.files), []);
+
+    t.is(files.length, 1);
+    t.true(includes(files, 'app.js'));
+    t.false(includes(files, 'https://unpkg.com/react@15.6.1/dist/react.js'));
+});
